@@ -1,4 +1,4 @@
-// int int int iifddfdffdaaa
+// int int int
 //  #define _XOPEN_SOURCE
 //  #define __USE_XOPEN
 //  #define  _GNU_SOURCE
@@ -19,6 +19,7 @@
 #define MAX_MES_NAME 100
 #define MAX_HASH 1024
 #define MAX_ADD 1024
+#define debug system("pwd")
 int check_alias(char *alias);
 
 int last_branch_id(char *branch);
@@ -48,6 +49,377 @@ int exist(char *addres);
 int compare_times(char *first, char *last);
 void local_alias(char *alias, char *instead);
 void glob_alias(char *alias, char *instead);
+void grep(char *file, char *word, int flag);
+void diff(char *file1, int start1, int finish1, char *file2, int start2, int finish2, char *show1, char *show2);
+void todo_check(char *answer, char *file_path);
+int if_cpp(char *file_path);
+void format_check(char *answer, char *file_path);
+void file_size_check(char *answer, char *file_path);
+void char_limit(char *answer, char *file_path);
+void balance_braces(char *answer, char *file_path);
+void eof_blank_space(char *answer, char *file_path);
+
+void eof_blank_space(char *answer, char *file_path)
+{
+    int length = strlen(file_path);
+    if (strcmp(file_path + length - 2, ".c") && strcmp(file_path + length - 4, ".cpp") && strcmp(file_path + length - 4, ".txt"))
+    {
+        char ans[1024] = "SKIPPED";
+        strcpy(answer, ans);
+        return;
+    }
+    FILE *file;
+    char ch;
+
+    // Open the file in read mode
+    file = fopen(file_path, "r");
+
+    if (file == NULL)
+    {
+        printf("Unable to open the file.\n");
+        return;
+    }
+
+    // Move the file pointer to the end of the file
+    fseek(file, -1, SEEK_END);
+
+    // Read the last character
+    ch = fgetc(file);
+
+    // printf("The final character of the file is: %c\n", ch);
+    if (ch == ' ' || ch == '\n' || ch == '\r' || ch == '\f' || ch == '\v')
+    {
+        char ans[1024] = "FAILED";
+        strcpy(answer, ans);
+        return;
+    }
+    char ans[1024] = "PASSED";
+    strcpy(answer, ans);
+    return;
+    // Close the file
+    fclose(file);
+}
+void balance_braces(char *answer, char *file_path)
+{
+    int brac_bac = 0, brac_for = 0, kro_bac = 0, kro_for = 0, par_bac = 0, par_for = 0;
+    if (if_cpp(file_path) == 0)
+    {
+        char ans[1024] = "SKIPPED";
+        strcpy(answer, ans);
+        return;
+    }
+    FILE *file = fopen(file_path, "r");
+    int count = 0;
+    char c;
+    while ((c = fgetc(file)) != EOF)
+    {
+        // count++;
+        // printf("c:%c", c);
+        if (c == '[')
+        {
+            brac_bac++;
+        }
+        if (c == ']')
+        {
+            brac_for++;
+        }
+        if (c == '}')
+        {
+            kro_for++;
+        }
+        if (c == '{')
+        {
+            kro_bac++;
+        }
+        if (c == '(')
+        {
+            par_bac++;
+        }
+        if (c == ')')
+        {
+            par_for++;
+        }
+    }
+    if (par_for == par_bac && kro_bac == kro_for && brac_bac == brac_for)
+    {
+        // printf("%d %d %d %d", par_bac, par_for, kro_for, kro_bac);
+        // printf("%d", count);
+        char ans[1024] = "PASSED";
+        strcpy(answer, ans);
+        return;
+    }
+    char ans[1024] = "FAILED";
+    strcpy(answer, ans);
+    return;
+}
+void char_limit(char *answer, char *file_path)
+{
+    int count = 0;
+    int length = strlen(file_path);
+    if (strcmp(file_path + length - 2, ".c") && strcmp(file_path + length - 4, ".cpp") && strcmp(file_path + length - 4, ".txt"))
+    {
+        char ans[1024] = "SKIPPED";
+        strcpy(answer, ans);
+        return;
+    }
+    FILE *file = fopen(file_path, "r");
+    char c;
+    while (fgetc(file) != EOF)
+    {
+        count++;
+    }
+    if (count > 20000)
+    {
+        char ans[1024] = "FAILED";
+        strcpy(answer, ans);
+        return;
+    }
+    char ans[1024] = "PASSED";
+    strcpy(answer, ans);
+    return;
+}
+
+void file_size_check(char *answer, char *file_path)
+{
+    FILE *file;
+    long size;
+    file = fopen(file_path, "rb");
+    if (file == NULL)
+    {
+        return;
+    }
+    fseek(file, 0, SEEK_END);
+    size = ftell(file);
+    fclose(file);
+    if (size > 5000000)
+    {
+        char ans[1024] = "FAILED";
+        strcpy(answer, ans);
+        return;
+    }
+    char ans[1024] = "PASSED";
+    strcpy(answer, ans);
+    return;
+}
+void format_check(char *answer, char *file_path)
+{
+    int length = strlen(file_path);
+    if (!strcmp(file_path + length - 4, ".MP3") || !strcmp(file_path + length - 4, ".MP4") || !strcmp(file_path + length - 4, ".PDF") || !strcmp(file_path + length - 5, ".DOCX") || !strcmp(file_path + length - 5, ".XLSX") || !strcmp(file_path + length - 5, ".JPEG") || !strcmp(file_path + length - 4, ".PNG"))
+    {
+        char ans[1024] = "PASSED";
+        strcpy(answer, ans);
+        return;
+    }
+    char ans[1024] = "FAILED";
+    strcpy(answer, ans);
+    return;
+}
+int if_cpp(char *file_path)
+{
+    char name[1024];
+    int flag = 1;
+    for (int i = strlen(file_path) - 1; i >= 0; i--)
+    {
+        if (file_path[i] == '/')
+        {
+            strcpy(name, &file_path[i + 1]);
+            flag = 0;
+            break;
+        }
+    }
+    if (flag)
+    {
+        strcpy(name, file_path);
+    }
+    // printf("%s\n", name);
+    // return;
+    int length = strlen(name);
+    // printf("%s", name + length - 4);
+    if (!strcmp(".cpp", name + length - 4) || !strcmp(".c", name + length - 2))
+    {
+        return 1;
+    }
+    return 0;
+}
+//}
+void todo_check(char *answer, char *file_path)
+{
+    if (if_cpp(file_path) == 0)
+    {
+        char ans[1024] = "SKIPPED";
+        strcpy(answer, ans);
+        return;
+    }
+    FILE *file = fopen(file_path, "r");
+    if (file == NULL)
+        return;
+    char line[1024];
+    while (fgets(line, sizeof(line), file))
+    {
+        if (strstr(line, "//"))
+        {
+            int place = (int)(strstr(line, "//") - line);
+            if (strstr(place + line, "TODO"))
+            {
+                char ans[1024] = "FAILED";
+                strcpy(answer, ans);
+                return;
+            }
+        }
+    }
+    rewind(file);
+    int if_comment = 0;
+    while (fgets(line, sizeof(line), file))
+    {
+        int place = 0, sec_place = 0, third_place = 110000000;
+        if (strstr(line, "/*"))
+        {
+            place = (int)(strstr(line, "/*") - line);
+            if_comment = 1;
+        }
+        if (strstr(line, "*/"))
+        {
+            third_place = (int)(strstr(line, "*/") - line);
+        }
+        if (strstr(line, "TODO") && if_comment)
+        {
+            sec_place = (int)(strstr(line, "TODO") - line);
+            if ((place == 0 || sec_place > place) && sec_place < third_place)
+            {
+                char ans[1024] = "FAILED";
+                strcpy(answer, ans);
+                return;
+            }
+        }
+        if (strstr(line, "*/"))
+        {
+            // third_place = (int)(strstr(line, "*/") - line);
+            if_comment = 0;
+        }
+    }
+
+    // printf("lps");
+    char ans[1024] = "PASSED";
+    strcpy(answer, ans);
+    return;
+}
+void diff(char *file1, int start1, int finish1, char *file2, int start2, int finish2, char *show1, char *show2)
+{
+    FILE *first = fopen(file1, "r");
+    FILE *second = fopen(file2, "r");
+
+    char first_line[1024], second_line[1024];
+    for (int i = 0; i < start1; i++)
+    {
+        fgets(first_line, 1024, first);
+    }
+    for (int i = 0; i < start2; i++)
+    {
+        fgets(second_line, 1024, second);
+    }
+
+    int line1 = start1;
+    int line2 = start2;
+    int flag = 0;
+    while (fgets(first_line, 1024, first))
+    {
+        if (line1 == finish1 || line2 == finish2)
+        {
+            return;
+        }
+        line1++;
+        flag = 0;
+        for (int i = 0; i < strlen(first_line) - 1; i++)
+        {
+            if (first_line[i] != '\0' && first_line[i] != '\n' && first_line[i] != ' ' && first_line[i] != '\t' && first_line[i] != '\v' && first_line[i] != '\f' && first_line[i] != '\r')
+            {
+                flag = 1;
+                break;
+            }
+        }
+        if (flag)
+        {
+            flag = 0;
+            while (fgets(second_line, sizeof(second_line), second))
+            {
+                line2++;
+                for (int i = 0; i < strlen(second_line); i++)
+                {
+                    if (second_line[i] != '\0' && second_line[i] != '\n' && second_line[i] != ' ' && second_line[i] != '\t' && second_line[i] != '\v' && second_line[i] != '\f' && second_line[i] != '\r')
+                    {
+                        flag = 1;
+                        break;
+                    }
+                }
+                if (flag)
+                {
+                    if (strcmp(first_line, second_line))
+                    {
+                        printf("«««««\n");
+                        // printf("«»");
+                        printf("%s-%d\n", show1, line1);
+                        printf("\033[34m%s\033[0m", first_line);
+                        if (first_line[strlen(first_line) - 1] != '\n')
+                        {
+                            printf("\n");
+                        }
+                        printf("%s-%d\n", show2, line2);
+                        printf("\033[31m%s\033[0m", second_line);
+                        if (second_line[strlen(second_line) - 1] != '\n')
+                        {
+                            printf("\n");
+                        }
+                        printf("»»»»»\n");
+                    }
+
+                    break;
+                }
+                else
+                    continue;
+            }
+        }
+        else
+            continue;
+        // line++;
+    }
+}
+void grep(char *file, char *word, int flag)
+{
+    FILE *f = fopen(file, "r");
+    char line[1024];
+    int which_line = 1;
+    while (fgets(line, 1024, f))
+    {
+        int line_print = 1;
+        int idx = 0, place = 0, length = strlen(word), allow = 0;
+        while (strstr(line + place, word))
+        {
+            if (line_print && flag)
+            {
+                line_print = 0;
+                printf("%d ", which_line);
+            }
+            allow = 1;
+            place = (int)(strstr(line + place, word) - line) + length;
+            for (int i = idx; i < place; i++)
+            {
+                if (i == place - length)
+                    printf("\033[32m");
+                printf("%c", line[i]);
+            }
+            printf("\033[0m");
+            idx = place;
+        }
+        if (allow)
+        {
+            for (int i = idx; i < strlen(line); i++)
+            {
+                printf("%c", line[i]);
+            }
+        }
+        which_line++;
+    }
+}
 int check_alias(char *alias)
 {
     // printf("%s", alias);
@@ -169,6 +541,8 @@ int chek_if_check()
 }
 void checkout(char *from)
 {
+    char cur[1024];
+    getcwd(cur, sizeof(cur));
     char add[1024];
     if_exist(add);
     chdir(add);
@@ -179,7 +553,7 @@ void checkout(char *from)
     struct dirent *entry;
     while (entry = readdir(dir))
     {
-        if (!strcmp(".", entry->d_name) && !strcmp("..", entry->d_name))
+        if (!strcmp(".", entry->d_name) || !strcmp("..", entry->d_name))
             continue;
         remove(entry->d_name);
     }
@@ -200,6 +574,7 @@ void checkout(char *from)
         strcat(command, to);
         system(command);
     }
+    chdir(cur);
 }
 void run_branch(char *name)
 {
@@ -1095,6 +1470,10 @@ void add(char *name, char *folder)
         {
             if (name[i] == '/')
             {
+                // if(i == strlen(name - 1))
+                // {
+
+                // }
                 // printf("folder: %s\nname: %s\n", folder, name);
                 for (int j = 0; j < i; j++)
                 {
@@ -1368,11 +1747,20 @@ void git()
         fprintf(if_can_commit, "%d", 1);
         fclose(if_can_commit);
         fprintf(current_cum, "0");
+        FILE *hook_list = fopen("hook_list", "w");
+        fprintf(hook_list, "todo-check\nformat-check\nbalance-braces\nfile-size-check\ncharacter-limit\neof-blank-space\n");
+        fclose(hook_list);
+        hook_list = fopen("applied_hooks", "w");
+        fclose(hook_list);
         mkdir("branches", 0777);
         chdir("branches");
         mkdir("master", 0777);
         chdir("..");
         FILE *k = fopen("place_and_id", "w");
+        fclose(k);
+        k = fopen("show_tag", "w");
+        fclose(k);
+        k = fopen("tag_history", "w");
         fclose(k);
         //
         char current[MAX_ADD];
@@ -1577,11 +1965,11 @@ int main(int argc, char *argv[])
                 }
                 else if (argc < 4)
                 {
-                    printf("Enter a commit message");
+                    printf("Enter a commit message\n");
                 }
                 else
                 {
-                    printf("Put your message between \"\"");
+                    printf("Put your message between \"\"\n");
                 }
             }
             else if (!strcmp(argv[2], "-s"))
@@ -1867,9 +2255,23 @@ int main(int argc, char *argv[])
                 chdir(addres);
                 if (!strcmp(argv[2], "HEAD"))
                 {
-                    printf("kk");
+                    // printf("kk");
                     FILE *write = fopen("commit_allowed.txt", "w");
                     fprintf(write, "%d", 1);
+                    char from[1024];
+                    strcpy(from, addres);
+                    strcat(from, "/branches/");
+                    FILE *id = fopen("current_commit.txt", "r");
+                    char idd[100];
+                    fscanf(id, "%s", idd);
+                    fclose(id);
+                    id = fopen("current_branch.txt", "r");
+                    char branch[1024];
+                    fscanf(id, "%s", branch);
+                    strcat(from, branch);
+                    strcat(from, "/");
+                    strcat(from, idd);
+                    checkout(from);
                     return 0;
                 }
                 chdir(addres);
@@ -1906,7 +2308,7 @@ int main(int argc, char *argv[])
                         getcwd(add, sizeof(add));
                         checkout(add);
                         // printf("%s", add);
-                        printf("%d", id);
+                        // printf("%d", id);
                         chdir(addres);
                         FILE *writed = fopen("commit_allowed.txt", "w");
                         fprintf(writed, "%d", 1);
@@ -1934,6 +2336,628 @@ int main(int argc, char *argv[])
             }
             else
                 existance_error;
+        }
+    }
+
+    else if (!strcmp(argv[1], "revert"))
+    {
+        char add[1024];
+        if (if_exist(add))
+        {
+            chdir(add);
+            if (!strcmp(argv[2], "-n"))
+            {
+                FILE *search = fopen("place_and_id", "r");
+                char line[1024];
+                while (fgets(line, 1024, search))
+                {
+                    char from[1024], id[100];
+                    sscanf(line, "%s %s\n", from, id);
+                    if (!strcmp(argv[3], id))
+                    {
+                        checkout(from);
+                        return 0;
+                    }
+                }
+            }
+
+            else
+            {
+                chdir(add);
+                char checkout_add[1024];
+                if (!strncmp("HEAD", argv[argc - 1], 4))
+                {
+                    // printf("kos");
+
+                    int number;
+                    sscanf(argv[argc - 1], "HEAD-%d", &number);
+                    FILE *cur = fopen("current_commit.txt", "r");
+                    int id;
+                    fscanf(cur, "%d", &id);
+                    id -= number;
+                    rewind(cur);
+                    fclose(cur);
+                    char idd[100];
+                    sprintf(idd, "%d", id);
+                    // printf("idd:%s\n", idd);
+                    FILE *f = fopen("place_and_id", "r");
+                    char line[1024];
+                    while (fgets(line, 1024, f))
+                    {
+                        char place[1024], idf[100];
+                        sscanf(line, "%s %s\n", place, idf);
+                        // printf("idf: %s\n", idf);
+                        if (!strcmp(idf, idd))
+                        {
+                            strcpy(checkout_add, place);
+                            break;
+                            // printf("lps");
+                        }
+                    }
+                    fclose(f);
+                }
+                else
+                {
+                    FILE *f = fopen("place_and_id", "r");
+                    char line[1024];
+                    while (fgets(line, 1024, f))
+                    {
+                        char place[1024], id[100];
+                        sscanf(line, "%s %s\n", place, id);
+                        if (!strcmp(id, argv[argc - 1]))
+                        {
+                            strcpy(checkout_add, place);
+                            break;
+                        }
+                    }
+                    fclose(f);
+                }
+                checkout(checkout_add);
+                int current_id;
+                FILE *curid = fopen("last_commit.txt", "r");
+                fscanf(curid, "%d", &current_id);
+
+                // system("pwd");
+                // printf("cad:%s\n", checkout_add);
+                fclose(curid);
+                curid = fopen("current_commit.txt", "w");
+
+                fprintf(curid, "%d", current_id + 1);
+                fclose(curid);
+                curid = fopen("last_commit.txt", "w");
+
+                fprintf(curid, "%d", current_id + 1);
+                fclose(curid);
+                char mess[1024];
+                FILE *file = fopen("list_of_commits.txt", "r");
+                if (argc > 3)
+                {
+                    strcpy(mess, argv[3]);
+                }
+
+                else
+                {
+                    char line[1024];
+                    while (fgets(line, 1024, file))
+                    {
+                        char message[100], date[200], branch[100], author[100];
+                        int ild, number_of_commited;
+                        sscanf(line, "commit id: %d\tauthor: %s\tbranch: %s\tnumber of files commited: %d\tmessage: %[^\t]s\ttime commited: %s", &ild, author, branch, &number_of_commited, message, date);
+                        if (current_id == ild)
+                        {
+                            strcpy(mess, message);
+                            break;
+                        }
+                    }
+                    rewind(file);
+                }
+                // system("pwd");
+                rewind(file);
+                FILE *write = fopen("temp.txt", "w");
+                char author[MAX_MES_NAME];
+                FILE *name_txt = fopen("name.txt", "r");
+                fscanf(name_txt, "%s", author);
+                fclose(name_txt);
+                time_t rawtime;
+                time_t now = time(NULL);
+                struct tm *ptm = localtime(&now);
+                char buf[256];
+                strftime(buf, sizeof(buf), "%Y/%m/%d %H:%M", ptm);
+                char branch[100];
+                FILE *branches = fopen("current_branch.txt", "r");
+                fscanf(branches, "%s", branch);
+                FILE *list_of_cums = fopen("list_of_commits.txt", "r");
+                fprintf(write, "commit id: %d\tauthor: %s\tbranch: %s\tnumber of files commited: %d\tmessage: %s\ttime commited: %s\n", current_id + 1, author, branch, 0, mess, buf);
+                printf("commit id: %d\tmessage: \"%s\"\ttime commited: %s\n", current_id + 1, mess, buf);
+                fclose(write);
+                write = fopen("temp.txt", "a");
+                char liin[MAX_ADD];
+                while (fgets(liin, sizeof(liin), list_of_cums))
+                {
+                    fprintf(write, "%s", liin);
+                }
+                fclose(write);
+                fclose(list_of_cums);
+                remove("list_of_commits.txt");
+                rename("temp.txt", "list_of_commits.txt");
+                char to[1024];
+                strcpy(to, add);
+                strcat(to, "/branches/");
+                strcat(to, branch);
+                strcat(to, "/");
+                char final_id[100];
+                sprintf(final_id, "%d", current_id + 1);
+                strcat(to, final_id);
+                chdir(add);
+                FILE *when = fopen("place_and_id", "a");
+                fprintf(when, "%s %s\n", to, final_id);
+                fclose(when);
+                chdir("branches");
+                chdir(branch);
+                mkdir(final_id, 0777);
+                chdir(checkout_add);
+                DIR *dir = opendir(".");
+                struct dirent *entry;
+                while (entry = readdir(dir))
+                {
+                    char command[1000] = "cp ";
+                    if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, ".."))
+                    {
+                        if (entry->d_type == 4)
+                        {
+                            strcat(command, "-r ");
+                        }
+                        strcat(command, entry->d_name);
+                        strcat(command, " ");
+                        strcat(command, to);
+                        // system("pwd");
+                        // printf("cum:\t%s\n", command);
+                        system(command);
+                    }
+                }
+            }
+        }
+        else
+            existance_error;
+    }
+    else if (!strcmp(argv[1], "grep"))
+    {
+        char string[1024];
+        if (if_exist(string) == 0)
+        {
+            existance_error;
+            return 0;
+        }
+        int if_line = 0;
+        if (!strcmp(argv[argc - 1], "-n"))
+            if_line = 1;
+        if (argc > 6)
+        {
+            if (!strcmp(argv[6], "-c"))
+            {
+                char add[1024];
+                strcpy(add, string);
+                strcat(add, "/place_and_id");
+                FILE *file = fopen(add, "r");
+                char line[1024];
+                while (fgets(line, 1024, file))
+                {
+                    char place[1024], id[100];
+                    sscanf(line, "%s %s\n", place, id);
+                    if (!strcmp(argv[7], id))
+                    {
+                        chdir(place);
+                        // printf("%s\n", place);
+                        // system("pwd");
+                        // return 0;
+                        break;
+                    }
+                }
+            }
+        }
+        grep(argv[3], argv[5], if_line);
+        // char path[1024];
+        // realpath(argv[3], path);
+        // printf("path:%s\n", path);
+    }
+    else if (!strcmp(argv[1], "tag"))
+    {
+        // debug;
+        char addres[1024];
+        if (!if_exist(addres))
+        {
+            existance_error;
+            return 0;
+        }
+        chdir(addres);
+        if (argc == 2)
+        {
+            char tag[100][1024];
+            FILE *read = fopen("show_tag", "r");
+            int size = 0;
+            while (fgets(tag[size], 1024, read))
+            {
+                size++;
+            }
+            for (int i = 0; i < size; i++)
+            {
+                for (int j = 0; j < size - 1; j++)
+                {
+                    if (strcmp(tag[j], tag[j + 1]) > 0)
+                    {
+                        char temp[1024];
+                        strcpy(temp, tag[j]);
+                        strcpy(tag[j], tag[j + 1]);
+                        strcpy(tag[j + 1], temp);
+                    }
+                }
+            }
+            for (int i = 0; i < size; i++)
+            {
+                printf("%s", tag[i]);
+            }
+            return 0;
+        }
+        else if (!strcmp(argv[2], "show"))
+        {
+            FILE *show = fopen("tag_history", "r");
+            char line[1024];
+            while (fgets(line, sizeof(line), show))
+            {
+                // printf("line:%s", line);
+                char tag[1024], commit[100], author[100], date[100], email[100], mess[100];
+                if (strstr(line, "Message"))
+                {
+                    char date1[1024], date2[1024];
+                    sscanf(line, "tag: %s commit: %s author: %s Date: %s %s Message:%[^\n]s", tag, commit, author, date1, date2, mess);
+                    if (strcmp(tag, argv[3]))
+                    {
+                        continue;
+                    }
+                    printf("tag: %s\ncommit: %s\nauthor: %s\nDate: %s %s\nMessage:%s\n", tag, commit, author, date1, date2, mess);
+                    break;
+                }
+                else
+                {
+                    sscanf(line, "tag: %s commit: %s author: %s Date: %[^\n]s", tag, commit, author, date);
+                    if (strcmp(tag, argv[3]))
+                    {
+                        continue;
+                    }
+                    printf("tag: %s\ncommit: %s\nauthor: %s\nDate: %s\n", tag, commit, author, date);
+                    break;
+                }
+            }
+
+            return 0;
+        }
+        int overwrite = 0;
+        int overwrited = 0;
+        if (!strcmp(argv[argc - 1], "-f"))
+        {
+            overwrite = 1;
+        }
+        int i = 0;
+        FILE *read = fopen("tag_history", "r");
+        char line[1024];
+        while (fgets(line, sizeof(line), read))
+        {
+            char tag[1024], commit[100], author[100], date[100], email[100], mess[100];
+            sscanf(line, "tag: %s commit: %s author: %s<%s> Date: %s Message: %s\n", tag, commit, author, email, date, mess);
+            if (!strcmp(tag, argv[3]))
+            {
+                if (overwrite)
+                {
+                    char relpath[1024], name[1000] = "tag_history";
+                    // realpath(name, relpath);
+                    remove_line(name, i);
+                    overwrited = 1;
+                    break;
+                }
+                else
+                {
+                    printf("The tag exist.\n");
+                    return 0;
+                }
+            }
+            i++;
+        }
+        fclose(read);
+        int mess = 0;
+        char current_id[100], branch[1024], message[1024];
+        if (!strcmp(argv[4], "-m"))
+        {
+            mess = 1;
+            strcpy(message, argv[5]);
+        }
+        if (!strcmp(argv[argc - 3], "-c") || !strcmp(argv[argc - 2], "-c"))
+        {
+            if (!strcmp(argv[argc - 3], "-c"))
+                strcpy(current_id, argv[argc - 2]);
+            else
+                strcpy(current_id, argv[argc - 1]);
+        }
+        else
+        {
+            FILE *id = fopen("current_commit.txt", "r");
+            fscanf(id, "%s", current_id);
+            fclose(id);
+        }
+        char name[100], email[100];
+        FILE *username = fopen("name.txt", "r");
+        fscanf(username, "%s", name);
+        fclose(username);
+        username = fopen("email.txt", "r");
+        fscanf(username, "%s", email);
+        fclose(username);
+        FILE *history = fopen("tag_history", "a");
+        if (mess == 0)
+        {
+            time_t rawtime;
+            time_t now = time(NULL);
+            struct tm *ptm = localtime(&now);
+            char buf[256];
+            strftime(buf, sizeof(buf), "%Y/%m/%d %H:%M", ptm);
+            fprintf(history, "tag: %s commit: %s author: %s<%s> Date: %s\n", argv[3], current_id, name, email, buf);
+        }
+        else
+        {
+            time_t rawtime;
+            time_t now = time(NULL);
+            struct tm *ptm = localtime(&now);
+            char buf[256];
+            strftime(buf, sizeof(buf), "%Y/%m/%d %H:%M", ptm);
+            fprintf(history, "tag: %s commit: %s author: %s<%s> Date: %s Message: %s\n", argv[3], current_id, name, email, buf, message);
+        }
+        fclose(history);
+        if (overwrited == 0)
+        {
+            history = fopen("show_tag", "a");
+            fprintf(history, "%s\n", argv[3]);
+        }
+    }
+    else if (!strcmp(argv[1], "diff"))
+    {
+        if (!strcmp(argv[2], "-f"))
+        {
+            // printf("ls");
+            int start1 = 0;
+            int finish1 = 10000000;
+            int start2 = 0, finish2 = 1000000;
+            if (!strcmp(argv[argc - 2], "-line2"))
+            {
+                int temp1, temp2;
+                sscanf(argv[argc - 1], "%d-%d", &temp1, &temp2);
+                start2 = temp1;
+                finish2 = temp2;
+            }
+            if (!strcmp(argv[argc - 2], "-line1"))
+            {
+                int temp1, temp2;
+                sscanf(argv[argc - 1], "%d-%d", &temp1, &temp2);
+                start1 = temp1;
+                finish1 = temp2;
+            }
+            if (!strcmp(argv[argc - 4], "-line1"))
+            {
+                int temp1, temp2;
+                sscanf(argv[argc - 3], "%d-%d", &temp1, &temp2);
+                start1 = temp1;
+                finish1 = temp2;
+            }
+            // printf("%s %s %s", argv[3], argv[4],)
+            diff(argv[3], start1, finish1, argv[4], start2, finish2, argv[3], argv[4]);
+        }
+        else
+        {
+            char line[1024];
+            char addres[1024];
+            if (if_exist(addres))
+            {
+                chdir(addres);
+                char first[1024], second[1024];
+                FILE *file = fopen("place_and_id", "r");
+                while ((fgets(line, sizeof(line), file)))
+                {
+                    char place[1024], id[100];
+                    sscanf(line, "%s %s\n", place, id);
+                    if (!strcmp(argv[3], id))
+                    {
+                        strcpy(first, place);
+                        rewind(file);
+                        break;
+                    }
+                }
+                while ((fgets(line, sizeof(line), file)))
+                {
+                    char place[1024], id[100];
+                    sscanf(line, "%s %s\n", place, id);
+                    if (!strcmp(argv[4], id))
+                    {
+                        strcpy(second, place);
+                        rewind(file);
+                        break;
+                    }
+                }
+                fclose(file);
+                chdir(first);
+                // system("pwd");
+                FILE *first_file = fopen("commited.txt", "r");
+                chdir(second);
+                FILE *second_file = fopen("commited.txt", "r");
+                // fclose(second_file);
+                // fclose(first_file);
+                char line1[1024];
+                char add_plus[1024];
+                strcpy(add_plus, addres);
+                for (int i = strlen(add_plus) - 1; i >= 0; i--)
+                {
+                    if (add_plus[i] == '/')
+                    {
+                        for (int j = i; j < strlen(add_plus); j++)
+                        {
+                            add_plus[j] = '\0';
+                        }
+                        break;
+                    }
+                }
+                // printf("%s\n", add_plus);
+
+                while (fgets(line1, sizeof(line1), first_file))
+                {
+                    char name[1024], hash[1024];
+                    sscanf(line1, "%s %s\n", name, hash);
+                    char line2[1024];
+                    while (fgets(line2, sizeof(line2), second_file))
+                    {
+                        char name2[1024], hash2[1024];
+                        sscanf(line2, "%s %s\n", name2, hash2);
+                        if (!strcmp(name2, name))
+                        {
+                            char first_place[1024], second_place[1024];
+                            strcpy(first_place, first);
+                            strcpy(second_place, second);
+                            // strcat(second_place, "/");
+                            // strcat(first_place, "/");
+                            strcat(first_place, name + strlen(add_plus));
+                            strcat(second_place, name2 + strlen(add_plus));
+                            // printf("second_line:%s  first_line:%s\n", first_place, second_place);
+                            char show1[1024];
+                            strcpy(show1, argv[3]);
+                            strcat(show1, "|");
+                            strcat(show1, name + strlen(add_plus) + 1);
+                            char show2[1024];
+                            strcpy(show2, argv[4]);
+                            strcat(show2, "|");
+                            strcat(show2, name + strlen(add_plus) + 1);
+                            diff(first_place, 0, 100000, second_place, 0, 10000, show1, show2);
+                        }
+                    }
+                    rewind(second_file);
+                }
+            }
+            else
+                existance_error;
+        }
+    }
+    else if (!strcmp(argv[1], "pre-commit"))
+    {
+        char string[1024];
+        if (if_exist(string))
+        {
+            chdir(string);
+            char add[1024];
+            strcpy(add, string);
+            for (int i = strlen(add) - 1; i >= 0; i--)
+            {
+                if (add[i] == '/')
+                {
+                    add[i] = '\0';
+
+                    break;
+                }
+            }
+
+            if (argc == 2)
+            {
+                chdir(string);
+                FILE *stage = fopen("staged_files.txt", "r");
+                char line[1024];
+                while (fgets(line, 1024, stage))
+                {
+                    char name[1024], hash[1024];
+                    sscanf(line, "%s %s\n", name, hash);
+                    FILE *file = fopen("applied_hooks", "r");
+                    char line2[1024];
+                    printf("%s:\n", name + strlen(add) + 1);
+                    while (fgets(line2, sizeof(line2), file))
+                    {
+                        char answer[1024];
+                        if (line2[strlen(line2) - 1] == '\n')
+                            line2[strlen(line2) - 1] = '\0';
+                        if (!strcmp(line2, "todo-check"))
+                        {
+                            todo_check(answer, name);
+                            printf("\033[31m%s..................................%s\n\033[0m", "todo-check", answer);
+                        }
+                        if (!strcmp(line2, "format-check"))
+                        {
+                            format_check(answer, name);
+                            printf("\033[32m%s..................................%s\n\033[0m", "format-check", answer);
+                        }
+                        if (!strcmp(line2, "balance-braces"))
+                        {
+                            balance_braces(answer, name);
+                            printf("\033[35m%s..................................%s\n\033[0m", "balance-braces", answer);
+                        }
+                        if (!strcmp(line2, "character-limit"))
+                        {
+                            char_limit(answer, name);
+                            printf("\033[34m%s..................................%s\n\033[0m", "character-limit", answer);
+                        }
+                        if (!strcmp(line2, "file-size-check"))
+                        {
+                            file_size_check(answer, name);
+                            printf("\033[33m%s..................................%s\n\033[0m", "file-size-check", answer);
+                        }
+                        if (!strcmp(line2, "eof-blank-space"))
+                        {
+                            eof_blank_space(answer, name);
+                            printf("\033[36m%s..................................%s\n\033[0m", "eof-blank-space", answer);
+                        }
+                    }
+                }
+            }
+            else if (!strcmp(argv[2], "hooks"))
+            {
+                FILE *file = fopen("hook_list", "r");
+                if (file == NULL)
+                    return -1;
+                char line[1024];
+                while (fgets(line, sizeof(line), file))
+                {
+                    printf("%s", line);
+                }
+                return 0;
+            }
+            else if (!strcmp(argv[2], "applied"))
+            {
+                FILE *file = fopen("applied_hooks", "r");
+                if (file == NULL)
+                    return -1;
+                char line[1024];
+                while (fgets(line, sizeof(line), file))
+                {
+                    printf("%s", line);
+                }
+                return 0;
+            }
+            else if (!strcmp(argv[2], "add"))
+            {
+                FILE *file = fopen("applied_hooks", "a");
+                fprintf(file, "%s\n", argv[4]);
+            }
+            else if (!strcmp("remove", argv[2]))
+            {
+                FILE *file = fopen("applied_hooks", "r");
+                if (file == NULL)
+                    return 1;
+                char line[1024];
+                int i = 0;
+                char hook[1024] = "applied_hooks";
+                while (fgets(line, 1024, file))
+                {
+                    if (line[strlen(line) - 1] == '\n')
+                        line[strlen(line) - 1] = '\0';
+                    if (!strcmp(argv[4], line))
+                    {
+                        remove_line(hook, i);
+                        // break;
+                    }
+                    i++;
+                }
+                return 0;
+            }
         }
     }
     else
